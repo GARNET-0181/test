@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ミナモア・ekie フロアクイズ | 荷物仕分け練習</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- スタート画面 -->
+        <div id="startScreen" class="screen active">
+            <div class="start-card">
+                <div class="logo">
+                    <i class="fas fa-building"></i>
+                    <h1>ミナモア・ekie<br>フロアクイズ</h1>
+                </div>
+                <p class="subtitle">荷物仕分け業務の学習ツール</p>
+                <p class="description">
+                    ショップ名から階数を当てるクイズで、<br>
+                    効率的に覚えられます！
+                </p>
+                
+                <div class="mode-selection">
+                    <h3><i class="fas fa-gamepad"></i> モードを選択</h3>
+                    <div class="mode-buttons">
+                        <button class="mode-btn" onclick="startQuiz('minamoa')">
+                            <i class="fas fa-play-circle"></i>
+                            <strong>minamoaクイズ</strong>
+                            <span>B1F〜6F</span>
+                        </button>
+                        <button class="mode-btn" onclick="startQuiz('ekie')">
+                            <i class="fas fa-play-circle"></i>
+                            <strong>ekieクイズ</strong>
+                            <span>1F〜2F</span>
+                        </button>
+                        <button class="mode-btn" onclick="startQuiz('all')">
+                            <i class="fas fa-star"></i>
+                            <strong>全店舗クイズ</strong>
+                            <span>チャレンジモード</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="question-count">
+                    <label for="questionCount">
+                        <i class="fas fa-list-ol"></i> 問題数:
+                    </label>
+                    <select id="questionCount">
+                        <option value="10" selected>10問</option>
+                        <option value="20">20問</option>
+                        <option value="30">30問</option>
+                        <option value="50">50問</option>
+                    </select>
+                </div>
+
+                <button class="secondary-btn" onclick="showStudyMode()">
+                    <i class="fas fa-book"></i> 学習モード（全店舗一覧）
+                </button>
+
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <i class="fas fa-store"></i>
+                        <div>
+                            <strong id="totalShops">0</strong>
+                            <span>登録店舗</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-chart-line"></i>
+                        <div>
+                            <strong id="bestScore">0</strong>
+                            <span>最高得点</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- クイズ画面 -->
+        <div id="quizScreen" class="screen">
+            <div class="quiz-header">
+                <button class="back-btn" onclick="backToStart()">
+                    <i class="fas fa-arrow-left"></i> 戻る
+                </button>
+                <div class="progress-info">
+                    <span class="question-number">問題 <strong id="currentQuestion">1</strong>/<strong id="totalQuestions">10</strong></span>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="score-display">
+                    <i class="fas fa-star"></i> <span id="currentScore">0</span>点
+                </div>
+            </div>
+
+            <div class="quiz-content">
+                <div class="shop-card-quiz">
+                    <div class="building-tag" id="buildingTag">minamoa</div>
+                    <h2 class="shop-name-quiz" id="shopName">スターバックス コーヒー</h2>
+                    <p class="question-text"><i class="fas fa-question-circle"></i> このお店は何階にありますか？</p>
+                </div>
+
+                <div class="answer-grid" id="answerGrid">
+                    <!-- 選択肢がJavaScriptで動的に生成されます -->
+                </div>
+
+                <div class="feedback" id="feedback" style="display: none;">
+                    <div class="feedback-content">
+                        <i class="feedback-icon"></i>
+                        <p class="feedback-text"></p>
+                        <p class="feedback-detail"></p>
+                    </div>
+                </div>
+
+                <!-- フロアマップ表示エリア -->
+                <div id="floorMapContainer" class="floor-map-container" style="display: none; margin-top: 20px; text-align: center;">
+                    <canvas id="floorMapCanvas" width="600" height="400" style="border: 2px solid #ddd; border-radius: 8px; background: #f9f9f9; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="resultScreen" class="screen">
+            <div class="result-card">
+                <div class="result-header">
+                    <i class="fas fa-trophy"></i>
+                    <h2>クイズ終了！</h2>
+                </div>
+
+                <div class="final-score">
+                    <div class="score-circle">
+                        <span class="score-value" id="finalScore">0</span>
+                        <span class="score-max">/ <span id="maxScore">100</span></span>
+                    </div>
+                    <p class="score-label">得点</p>
+                </div>
+
+                <div class="result-stats">
+                    <div class="result-stat">
+                        <i class="fas fa-check-circle"></i>
+                        <strong id="correctCount">0</strong>
+                        <span>正解</span>
+                    </div>
+                    <div class="result-stat">
+                        <i class="fas fa-times-circle"></i>
+                        <strong id="wrongCount">0</strong>
+                        <span>不正解</span>
+                    </div>
+                    <div class="result-stat">
+                        <i class="fas fa-percentage"></i>
+                        <strong id="accuracy">0</strong>%
+                        <span>正解率</span>
+                    </div>
+                </div>
+
+                <p class="result-message" id="resultMessage"></p>
+
+                <div class="result-actions">
+                    <button class="primary-btn" onclick="restartQuiz()">
+                        <i class="fas fa-redo"></i> もう一度挑戦
+                    </button>
+                    <button class="secondary-btn" onclick="backToStart()">
+                        <i class="fas fa-home"></i> トップに戻る
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 学習モード -->
+        <div id="studyScreen" class="screen">
+            <div class="study-header">
+                <button class="back-btn" onclick="backToStart()">
+                    <i class="fas fa-arrow-left"></i> 戻る
+                </button>
+                <h2><i class="fas fa-book"></i> 学習モード - 全店舗一覧</h2>
+            </div>
+
+            <div class="study-filters">
+                <button class="filter-btn active" data-building="all" onclick="filterShops('all')">
+                    全て
+                </button>
+                <button class="filter-btn" data-building="minamoa" onclick="filterShops('minamoa')">
+                    minamoa
+                </button>
+                <button class="filter-btn" data-building="ekie" onclick="filterShops('ekie')">
+                    ekie
+                </button>
+            </div>
+
+            <div class="search-box-study">
+                <i class="fas fa-search"></i>
+                <input type="text" id="studySearch" placeholder="ショップ名で検索..." oninput="searchShops(this.value)">
+            </div>
+
+            <div class="shop-list" id="shopList">
+                <!-- ショップリストがJavaScriptで動的に生成されます -->
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="quiz.js"></script>
+    <script src="study.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
